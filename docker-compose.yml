@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+  reverse-proxy:
+    image: traefik # The official Traefik docker image
+    command: --api --docker # Enables the web UI and tells Træfik to listen to docker
+    ports:
+      - "80:80"     # The HTTP port
+      - "8082:8080" # The Web UI (enabled by --api)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # So that Traefik can listen to the Docker events
+
+  # whoami:
+  #   image: emilevauge/whoami # A container that exposes an API to show its IP address
+  #   labels:
+  #     - "traefik.frontend.rule=Host:whoami.docker.localhost"
+
+  gitlab_api:
+    image: yad2yad.online:5000/gitlab-api:1.0
+    ports:
+      - "3030:3030"
+    labels:
+      - "traefik.frontend.rule=PathPrefixStrip: /gitlab_api"
+  jenkins_api:
+    image: yad2yad.online:5000/jenkins-api:1.0
+    ports:
+      - "3031:3031"
+    labels:
+      - "traefik.frontend.rule=PathPrefixStrip: /jenkins_api"
+  jenkins:
+    image: jenkins
+    ports:
+      - "8085:8085"
+      - "50000:50000"
+    volumes:
+      - /var/jenkins_home
+    environment:
+      - JENKINS_OPTS="--httpPort=8085"
